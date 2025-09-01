@@ -8,8 +8,8 @@ st.set_page_config(page_title="Scanner App", layout="wide")
 # -------------------
 if "page" not in st.session_state:
     st.session_state.page = "home"  # default page
-if "scans" not in st.session_state:
-    st.session_state.scans = []
+if "scans_scan2" not in st.session_state:
+    st.session_state.scans_scan2 = []
 if "scans_scan1" not in st.session_state:
     st.session_state.scans_scan1 = []
 if "refocus_qr" not in st.session_state:
@@ -18,59 +18,31 @@ if "refocus_qr" not in st.session_state:
 # -------------------
 # Navigation Buttons
 # -------------------
-col_nav1, col_nav2 = st.columns([1, 6])
+col_nav1, col_nav2, col_nav3 = st.columns([1, 1, 6])
 with col_nav1:
     if st.button("🏠 Home"):
         st.session_state.page = "home"
         st.rerun()
 with col_nav2:
-    if st.button("📄 Scan 1"):
+    if st.button("🎯 Scan 1"):
         st.session_state.page = "scan1"
+        st.rerun()
+with col_nav3:
+    if st.button("📦 Scan 2"):
+        st.session_state.page = "scan2"
         st.rerun()
 
 st.markdown("---")
 
 # -------------------
-# Page 1: Home (3-column scan table)
+# Page: Home (blank)
 # -------------------
 if st.session_state.page == "home":
-    st.title("📦 Scanning Table")
-
-    with st.form("scan_form", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            qr_code = st.text_input("QR Code", key="qr_code")
-        with col2:
-            tracking_num = st.text_input("Tr # (Required)", key="tracking_num")
-        with col3:
-            imei = st.text_input("IMEI", key="imei")
-
-        submitted = st.form_submit_button("➕ Add Scan")
-
-    if submitted:
-        if not tracking_num:
-            st.error("❌ Tracking # is required!")
-        elif not qr_code or not imei:
-            st.error("❌ All fields are required!")
-        else:
-            st.session_state.scans.append({
-                "QR Code": qr_code,
-                "Tr #": tracking_num,
-                "IMEI": imei,
-                "Status": False
-            })
-            st.success("✅ Scan added!")
-            st.session_state.refocus_qr = True
-            st.rerun()
-
-    if st.session_state.scans:
-        df = pd.DataFrame(st.session_state.scans)
-        st.dataframe(df, use_container_width=True)
-    else:
-        st.info("No scans yet. Start by adding your first scan above.")
+    st.title("🏠 Home")
+    st.info("Welcome to the Scanner App. Use the buttons above to start scanning.")
 
 # -------------------
-# Page 2: Scan 1 (5-column scan table)
+# Page: Scan 1 (5-column table)
 # -------------------
 elif st.session_state.page == "scan1":
     st.title("🎯 Scan 1 Table")
@@ -113,6 +85,45 @@ elif st.session_state.page == "scan1":
         st.info("No scans yet in Scan 1. Start scanning above.")
 
 # -------------------
+# Page: Scan 2 (3-column table — old home)
+# -------------------
+elif st.session_state.page == "scan2":
+    st.title("📦 Scan 2 Table")
+
+    with st.form("scan2_form", clear_on_submit=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            qr_code = st.text_input("QR Code (Scan 2)", key="qr_code_scan2")
+        with col2:
+            tracking_num = st.text_input("Tr # (Required)", key="tracking_num_scan2")
+        with col3:
+            imei = st.text_input("IMEI", key="imei_scan2")
+
+        submitted = st.form_submit_button("➕ Add Scan (Scan 2)")
+
+    if submitted:
+        if not tracking_num:
+            st.error("❌ Tracking # is required!")
+        elif not qr_code or not imei:
+            st.error("❌ All fields are required!")
+        else:
+            st.session_state.scans_scan2.append({
+                "QR Code": qr_code,
+                "Tr #": tracking_num,
+                "IMEI": imei,
+                "Status": False
+            })
+            st.success("✅ Scan added to Scan 2!")
+            st.session_state.refocus_qr = True
+            st.rerun()
+
+    if st.session_state.scans_scan2:
+        df2 = pd.DataFrame(st.session_state.scans_scan2)
+        st.dataframe(df2, use_container_width=True)
+    else:
+        st.info("No scans yet in Scan 2. Start scanning above.")
+
+# -------------------
 # Autofocus JS
 # -------------------
 if st.session_state.refocus_qr:
@@ -120,9 +131,9 @@ if st.session_state.refocus_qr:
         """
         <script>
         setTimeout(function () {
-          // Focus first QR input visible
-          const qrInputs = document.querySelectorAll('input[aria-label^="QR Code"]');
-          if (qrInputs.length > 0) { qrInputs[0].focus(); qrInputs[0].select(); }
+          // Find the first input with 'QR Code' in its label and focus
+          const el = document.querySelector('input[aria-label^="QR Code"]');
+          if (el) { el.focus(); el.select(); }
         }, 50);
         </script>
         """,
