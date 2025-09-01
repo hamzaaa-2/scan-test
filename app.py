@@ -5,10 +5,12 @@ st.set_page_config(page_title="Scanner", layout="wide")
 st.title("📦 Scanning Table")
 
 # -------------------
-# Initialize session state for scans
+# Initialize session state
 # -------------------
 if "scans" not in st.session_state:
     st.session_state.scans = []
+if "refocus_qr" not in st.session_state:
+    st.session_state.refocus_qr = True  # focus QR on first load too
 
 # -------------------
 # Input form
@@ -21,14 +23,14 @@ with st.form("scan_form", clear_on_submit=True):
         tracking_num = st.text_input("Tr # (Required)", key="tracking_num")
     with col3:
         imei = st.text_input("IMEI", key="imei")
-    
+
     submitted = st.form_submit_button("➕ Add Scan")
 
 # -------------------
-# Save scan to session state
+# Save scan
 # -------------------
 if submitted:
-    if not tracking_num:  # Tracking # is mandatory
+    if not tracking_num:
         st.error("❌ Tracking # is required!")
     elif not qr_code or not imei:
         st.error("❌ All fields are required!")
@@ -40,10 +42,12 @@ if submitted:
             "Status": False
         })
         st.success("✅ Scan added!")
+        # tell next render to focus QR Code, then rerun immediately
+        st.session_state.refocus_qr = True
         st.rerun()
 
 # -------------------
-# Display scans in a live table
+# Table
 # -------------------
 if st.session_state.scans:
     df = pd.DataFrame(st.session_state.scans)
@@ -52,15 +56,19 @@ else:
     st.info("No scans yet. Start by adding your first scan above.")
 
 # -------------------
-# Autofocus back to QR Code input
+# JS autofocus back to QR Code after submit/rerun
 # -------------------
-st.markdown(
-    """
-    <script>
-    // Find all text inputs on the page
-    const qrInput = window.parent.document.querySelectorAll('input[type="text"]')[0];
-    if (qrInput) { qrInput.focus(); }
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+if st.session_state.refocus_qr:
+    st.markdown(
+        """
+        <script>
+        setTimeout(function () {
+          // Find the text input whose aria-label equals the Streamlit label
+          const el = document.querySelector('input[aria-label="QR Code"]');
+          if (el) { el.focus(); el.select(); }
+        }, 50);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+    st.session_state.refocus_qr = False
