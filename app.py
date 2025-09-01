@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Scanner", layout="wide")
-st.title("Scanning Table")
+st.title("📦 Scanning Table")
 
 # -------------------
 # Initialize session state for scans
@@ -40,9 +40,6 @@ if submitted:
             "Status": False
         })
         st.success("✅ Scan added!")
-
-        # Reset focus back to QR Code (cursor jumps back)
-        st.query_params["focus"] = "qr"
         st.rerun()
 
 # -------------------
@@ -53,3 +50,17 @@ if st.session_state.scans:
     st.dataframe(df, use_container_width=True)
 else:
     st.info("No scans yet. Start by adding your first scan above.")
+
+# -------------------
+# Autofocus back to QR Code input
+# -------------------
+st.markdown(
+    """
+    <script>
+    // Find all text inputs on the page
+    const qrInput = window.parent.document.querySelectorAll('input[type="text"]')[0];
+    if (qrInput) { qrInput.focus(); }
+    </script>
+    """,
+    unsafe_allow_html=True
+)
