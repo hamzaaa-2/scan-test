@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse Scanner App</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Warehouse Scanner</h1>
+  <input id="scannerInput" placeholder="Scan or enter code" autofocus>
+  <button onclick="addScan()">Add</button>
+
+  <table id="scanTable">
+    <thead>
+      <tr><th>Item</th><th>Time</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function addScan() {
+      const input = document.getElementById("scannerInput");
+      const value = input.value.trim();
+      if (!value) return;
+
+      const table = document.getElementById("scanTable").querySelector("tbody");
+      const row = table.insertRow();
+      row.insertCell(0).textContent = value;
+      row.insertCell(1).textContent = new Date().toLocaleString();
+
+      input.value = "";
+      input.focus();
+    }
+  </script>
+</body>
+</html>
