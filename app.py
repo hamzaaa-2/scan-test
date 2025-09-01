@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Scanner", layout="wide")
-st.title("📦 Scanning Table")
+st.title("Scanning Table")
 
 # -------------------
 # Initialize session state for scans
@@ -41,9 +41,9 @@ if submitted:
         })
         st.success("✅ Scan added!")
 
-        # Reset focus back to QR Code
-        st.experimental_set_query_params(focus="qr")
-        st.experimental_rerun()
+        # Reset focus back to QR Code (cursor jumps back)
+        st.query_params["focus"] = "qr"
+        st.rerun()
 
 # -------------------
 # Display scans in a live table
