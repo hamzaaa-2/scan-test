@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Scanner", layout="wide")
-st.title("Scanning Table")
+st.title("📦 Scanning Table")
 
 # -------------------
 # Initialize session state for scans
@@ -16,11 +16,11 @@ if "scans" not in st.session_state:
 with st.form("scan_form", clear_on_submit=True):
     col1, col2, col3 = st.columns(3)
     with col1:
-        qr_code = st.text_input("QR Code")
+        qr_code = st.text_input("QR Code", key="qr_code")
     with col2:
-        tracking_num = st.text_input("Tr #")
+        tracking_num = st.text_input("Tr # (Required)", key="tracking_num")
     with col3:
-        imei = st.text_input("IMEI")
+        imei = st.text_input("IMEI", key="imei")
     
     submitted = st.form_submit_button("➕ Add Scan")
 
@@ -28,16 +28,22 @@ with st.form("scan_form", clear_on_submit=True):
 # Save scan to session state
 # -------------------
 if submitted:
-    if not qr_code or not tracking_num or not imei:
-        st.error("All fields are required!")
+    if not tracking_num:  # Tracking # is mandatory
+        st.error("❌ Tracking # is required!")
+    elif not qr_code or not imei:
+        st.error("❌ All fields are required!")
     else:
         st.session_state.scans.append({
             "QR Code": qr_code,
             "Tr #": tracking_num,
             "IMEI": imei,
-            "Status": False  # default until later verification
+            "Status": False
         })
         st.success("✅ Scan added!")
+
+        # Reset focus back to QR Code
+        st.experimental_set_query_params(focus="qr")
+        st.experimental_rerun()
 
 # -------------------
 # Display scans in a live table
