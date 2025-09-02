@@ -45,44 +45,81 @@ if st.session_state.page == "home":
 # Page: Scan 1 (5-column table)
 # -------------------
 elif st.session_state.page == "scan1":
-    st.title("🎯 Scan 1 Table")
+    st.title("Scan 1")
 
+# -------------------
+# Initialize session state for Scan 1
+# -------------------
+if "scans_scan1" not in st.session_state:
+    st.session_state.scans_scan1 = []
+
+# -------------------
+# Validation helper
+# -------------------
+    def check_duplicate_ic(field_name, value):
+        """Check if IC already exists in session data"""
+        for row in st.session_state.scans_scan1:
+            if row[field_name] == value:
+                return True
+        return False
+    
+    # -------------------
+    # Input form
+    # -------------------
     with st.form("scan1_form", clear_on_submit=True):
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            qr_code = st.text_input("QR Code (Scan 1)", key="qr_code_scan1")
+            qr_code = st.text_input("QR Code")
         with col2:
-            black_ic = st.text_input("black_ic", key="black_ic")
+            black_ic = st.text_input("black_ic")
         with col3:
-            blue_ic = st.text_input("blue_ic", key="blue_ic")
+            blue_ic = st.text_input("blue_ic")
         with col4:
-            u_blue_ic = st.text_input("u_blue_ic", key="u_blue_ic")
+            u_blue_ic = st.text_input("u_blue_ic")
         with col5:
-            red_ic = st.text_input("red_ic", key="red_ic")
-
-        submitted = st.form_submit_button("➕ Add Scan (Scan 1)")
-
+            red_ic = st.text_input("red_ic")
+    
+        submitted = st.form_submit_button("➕ Add Scan")
+    
+    # -------------------
+    # Save scan to session state
+    # -------------------
     if submitted:
-        if not qr_code or not black_ic or not blue_ic or not u_blue_ic or not red_ic:
-            st.error("❌ All fields are required!")
+        # Validate QR Code uniqueness
+        if any(row["QR Code"] == qr_code for row in st.session_state.scans_scan1):
+            st.error("❌ Duplicate QR Code")
+        # black_ic validation
+        elif check_duplicate_ic("black_ic", black_ic) or not (len(black_ic) == 20 and black_ic.startswith("6641")):
+            st.error("❌ Check for duplicate ic or incorrect ic value for black_ic")
+        # blue_ic validation
+        elif check_duplicate_ic("blue_ic", blue_ic) or not (len(blue_ic) == 19 and blue_ic.startswith("6601")):
+            st.error("❌ Check for duplicate ic or incorrect ic value for blue_ic")
+        # u_blue_ic validation
+        elif check_duplicate_ic("u_blue_ic", u_blue_ic) or not (len(u_blue_ic) == 19 and u_blue_ic.startswith("6601")):
+            st.error("❌ Check for duplicate ic or incorrect ic value for u_blue_ic")
+        # red_ic validation
+        elif check_duplicate_ic("red_ic", red_ic) or not (len(red_ic) == 20 and red_ic.startswith("6601")):
+            st.error("❌ Check for duplicate ic or incorrect ic value for red_ic")
         else:
+            # ✅ Passed all checks → save row
             st.session_state.scans_scan1.append({
                 "QR Code": qr_code,
                 "black_ic": black_ic,
                 "blue_ic": blue_ic,
                 "u_blue_ic": u_blue_ic,
                 "red_ic": red_ic,
-                "Status": False
+                "Status": False  # default placeholder
             })
-            st.success("✅ Scan added to Scan 1!")
-            st.session_state.refocus_qr = True
-            st.rerun()
-
+            st.success("✅ Scan added!")
+    
+    # -------------------
+    # Display scans in a live table
+    # -------------------
     if st.session_state.scans_scan1:
-        df1 = pd.DataFrame(st.session_state.scans_scan1)
-        st.dataframe(df1, use_container_width=True)
+        df = pd.DataFrame(st.session_state.scans_scan1)
+        st.dataframe(df, use_container_width=True)
     else:
-        st.info("No scans yet in Scan 1. Start scanning above.")
+        st.info("No scans yet. Start by adding your first scan above.")
 
 # -------------------
 # Page: Scan 2 (3-column table — old home)
