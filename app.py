@@ -151,41 +151,39 @@ elif st.session_state.page == "scan2":
             return "IC-004"  # Red IC logic
         return None
 
-    # --- Helper: Verify SKU against ShipStation ---
+    # --- Helper: Verify SKU against ShipStation --- #
     def verify_with_shipstation(tracking_num: str, sku: str):
-        api_key = st.secrets["SHIPSTATION_API_KEY"]
-        api_secret = st.secrets["SHIPSTATION_API_SECRET"]
-
+        api_key = os.getenv("SHIPSTATION_API_KEY")
+        api_secret = os.getenv("SHIPSTATION_API_SECRET")
+    
         if not api_key or not api_secret:
-            st.warning("⚠️ ShipStation API credentials not set in environment.")
-            return False
-
+            return None  # No creds configured
+    
         try:
             resp = requests.get(
                 f"https://ssapi.shipstation.com/shipments?trackingNumber={tracking_num}",
                 auth=(api_key, api_secret)
             )
             if resp.status_code != 200:
-                st.error(f"❌ API error: {resp.status_code}")
-                return False
-
+                return None
+    
             data = resp.json()
             shipments = data.get("shipments", [])
             if not shipments:
-                st.warning("⚠️ No shipment found for this tracking number.")
                 return False
-
-            # Collect SKUs from order items
+    
+            # Collect SKUs from shipment items
             order_items = []
             for shipment in shipments:
                 for item in shipment.get("shipmentItems", []):
-                    order_items.append(item.get("sku"))
-
+                    if "sku" in item:
+                        order_items.append(item["sku"])
+    
+            # Check if scanned SKU exists in order
             return sku in order_items
-
-        except Exception as e:
-            st.error(f"❌ API exception: {e}")
-            return False
+    
+        except Exception:
+            return None
 
     # Input form
     with st.form("scan2_form", clear_on_submit=True):
@@ -206,37 +204,38 @@ elif st.session_state.page == "scan2":
             st.error("❌ QR Code is required!")
         else:
             rows_to_add = []
-
-            # Always add the QR Code item
+    
+            # Always add QR Code as SKU
             sku = get_sku_from_qr(qr_code)
             if sku:
                 verified = verify_with_shipstation(tracking_num, sku)
+                status_display = "✅ True" if verified else "❌ False"
                 rows_to_add.append({
                     "QR Code": qr_code,
                     "Tr #": tracking_num,
                     "IMEI": "",
                     "SKU": sku,
-                    "Status": verified  # ✅ or ❌ depending on API check
+                    "Status": status_display
                 })
             else:
                 st.warning("⚠️ QR Code does not match any SKU rule.")
-
-            # If IMEI provided and valid, add it as DE-001
+    
+            # IMEI as DE-001
             if imei and len(imei) == 15 and imei.isdigit():
                 verified = verify_with_shipstation(tracking_num, "DE-001")
+                status_display = "✅ True" if verified else "❌ False"
                 rows_to_add.append({
                     "QR Code": "",
                     "Tr #": tracking_num,
                     "IMEI": imei,
                     "SKU": "DE-001",
-                    "Status": verified
+                    "Status": status_display
                 })
-
+    
             if rows_to_add:
                 st.session_state.scans_scan2.extend(rows_to_add)
                 st.success("✅ Scan(s) added to Scan 2!")
-
-            # Refocus QR field
+    
             st.session_state.refocus_qr = True
             st.rerun()
 
