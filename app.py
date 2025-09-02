@@ -153,8 +153,8 @@ elif st.session_state.page == "scan2":
 
     # --- Helper: Verify SKU against ShipStation --- #
     def verify_with_shipstation(tracking_num: str, sku: str):
-        api_key = os.getenv("SHIPSTATION_API_KEY")
-        api_secret = os.getenv("SHIPSTATION_API_SECRET")
+        api_key = st.secrets["SHIPSTATION_API_KEY"]
+        api_secret = st.secrets["SHIPSTATION_API_SECRET"]
     
         if not api_key or not api_secret:
             return None  # No creds configured
