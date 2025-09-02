@@ -152,38 +152,54 @@ elif st.session_state.page == "scan2":
         return None
 
     # --- Helper: Verify SKU against ShipStation --- #
-    def verify_with_shipstation(tracking_num: str, sku: str):
+# --- Helper: Verify scanned SKUs against ShipStation shipment items --- #
+    def verify_with_shipstation(tracking_num: str, scanned_items: dict):
+        """
+        scanned_items: dict of {sku: count} from current scan attempt
+        returns: (bool, str) -> (verification_passed, message)
+        """
         api_key = st.secrets["SHIPSTATION_API_KEY"]
         api_secret = st.secrets["SHIPSTATION_API_SECRET"]
     
         if not api_key or not api_secret:
-            return None  # No creds configured
+            return (False, "❌ API credentials not configured")
     
         try:
             resp = requests.get(
-                f"https://ssapi.shipstation.com/shipments?trackingNumber={tracking_num}",
+                f"https://ssapi.shipstation.com/shipments?trackingNumber={tracking_num}&includeShipmentItems=true",
                 auth=(api_key, api_secret)
             )
             if resp.status_code != 200:
-                return None
+                return (False, f"❌ API error {resp.status_code}")
     
             data = resp.json()
             shipments = data.get("shipments", [])
             if not shipments:
-                return False
+                return (False, "❌ No shipment found for tracking number")
     
-            # Collect SKUs from shipment items
-            order_items = []
+            # Build expected SKU -> qty from ShipStation
+            expected = {}
             for shipment in shipments:
                 for item in shipment.get("shipmentItems", []):
-                    if "sku" in item:
-                        order_items.append(item["sku"])
+                    sku = item.get("sku")
+                    qty = item.get("quantity", 0)
+                    if sku:
+                        expected[sku] = expected.get(sku, 0) + qty
     
-            # Check if scanned SKU exists in order
-            return sku in order_items
+            # Compare scanned vs expected
+            mismatches = []
+            for sku, count in scanned_items.items():
+                if expected.get(sku, 0) != count:
+                    mismatches.append(f"{sku} (expected {expected.get(sku,0)}, scanned {count})")
     
-        except Exception:
-            return None
+            if mismatches:
+                return (False, "❌ Mismatch: " + ", ".join(mismatches))
+            else:
+                return (True, "✅ All items verified correctly")
+    
+        except Exception as e:
+            return (False, f"❌ Exception: {str(e)}")
+
 
     # Input form
     with st.form("scan2_form", clear_on_submit=True):
