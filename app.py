@@ -49,6 +49,8 @@ elif st.session_state.page == "scan1":
 
     # Helper function to check duplicate IC values
     def check_duplicate_ic(field_name, value):
+        if not value:  # empty values are allowed
+            return False
         for row in st.session_state.scans_scan1:
             if row[field_name] == value:
                 return True
@@ -72,17 +74,42 @@ elif st.session_state.page == "scan1":
 
     # Validation + Save
     if submitted:
-        if any(row["QR Code"] == qr_code for row in st.session_state.scans_scan1):
+        # QR Code is mandatory
+        if not qr_code:
+            st.error("❌ QR Code is required!")
+        elif any(row["QR Code"] == qr_code for row in st.session_state.scans_scan1):
             st.error("❌ Duplicate QR Code")
-        elif check_duplicate_ic("black_ic", black_ic) or not (len(black_ic) == 20 and black_ic.startswith("6641")):
+
+        # black_ic validation (if provided)
+        elif black_ic and (
+            check_duplicate_ic("black_ic", black_ic)
+            or not (len(black_ic) == 20 and black_ic.startswith("6641"))
+        ):
             st.error("❌ Check for duplicate ic or incorrect ic value for black_ic")
-        elif check_duplicate_ic("blue_ic", blue_ic) or not (len(blue_ic) == 19 and blue_ic.startswith("6601")):
+
+        # blue_ic validation (if provided)
+        elif blue_ic and (
+            check_duplicate_ic("blue_ic", blue_ic)
+            or not (len(blue_ic) == 19 and blue_ic.startswith("6601"))
+        ):
             st.error("❌ Check for duplicate ic or incorrect ic value for blue_ic")
-        elif check_duplicate_ic("u_blue_ic", u_blue_ic) or not (len(u_blue_ic) == 19 and u_blue_ic.startswith("6601")):
+
+        # u_blue_ic validation (if provided)
+        elif u_blue_ic and (
+            check_duplicate_ic("u_blue_ic", u_blue_ic)
+            or not (len(u_blue_ic) == 19 and u_blue_ic.startswith("6601"))
+        ):
             st.error("❌ Check for duplicate ic or incorrect ic value for u_blue_ic")
-        elif check_duplicate_ic("red_ic", red_ic) or not (len(red_ic) == 20 and red_ic.startswith("6601")):
+
+        # red_ic validation (if provided)
+        elif red_ic and (
+            check_duplicate_ic("red_ic", red_ic)
+            or not (len(red_ic) == 20 and red_ic.startswith("6601"))
+        ):
             st.error("❌ Check for duplicate ic or incorrect ic value for red_ic")
+
         else:
+            # ✅ Passed all checks → save row
             st.session_state.scans_scan1.append({
                 "QR Code": qr_code,
                 "black_ic": black_ic,
